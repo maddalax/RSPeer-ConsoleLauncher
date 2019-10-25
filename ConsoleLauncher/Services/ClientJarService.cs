@@ -1,9 +1,9 @@
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using ConsoleLauncher.Extensions;
 using ConsoleLauncher.Models;
-using ConsoleLauncher.Providers;
 using ConsoleLauncher.Shell;
 
 namespace ConsoleLauncher.Services
@@ -11,16 +11,18 @@ namespace ConsoleLauncher.Services
     public class ClientJarService : IClientJarService
     {
         private HttpClient _client;
-        private IAppArgProvider _provider;
+        private readonly IAuthorizationService _authorization;
+        private readonly IUserService _userService;
         private readonly IFileService _fileService;
         private readonly ILogger _logger;
 
-        public ClientJarService(IHttpClientFactory factory, IAppArgProvider provider, IFileService fileService, ILogger logger)
+        public ClientJarService(IHttpClientFactory factory, IUserService userService, IFileService fileService, ILogger logger, IAuthorizationService authorization)
         {
             _client = factory.CreateClient("ClientJarDownloader");
-            _provider = provider;
+            _userService = userService;
             _fileService = fileService;
             _logger = logger;
+            _authorization = authorization;
         }
 
         public async Task<double> GetLatestVersion(Game game)
@@ -32,7 +34,6 @@ namespace ConsoleLauncher.Services
         public async Task<string> GetLatestJarPath(Game game)
         {
             var version = await GetLatestVersion(game);
-            await _logger.Log($"Latest client version for {game.ToString()} is {version}");
             var folder = _fileService.GetJarFolder(game);
             var jar = Path.Join(folder, $"{version}.jar");
             
@@ -76,17 +77,44 @@ namespace ConsoleLauncher.Services
                                   " but we already have the latest. Skipping.");
                 return;
             }
+
+            if (!await HasAccess(game))
+            {
+                return;
+            }
             
-            await _logger.Log("Downloading the latest jar file for " + game.ToString());
+            var session = await _authorization.GetSession();
+
+            if (string.IsNullOrEmpty(session))
+            {
+                await _logger.Log("Attempted to downloaded latest client version but session was null.");
+                return;
+            }
+            
+            await _logger.Log("Downloading the latest jar file for " + game);
             var path = await GetLatestJarPath(game);
             var url = "https://services.rspeer.org/api/bot/currentJar?game=" + game;
             await _logger.Log("Saving to path " + path);
             await _logger.Log("Sending request to " + url);
-            await using var stream = await _client.GetStreamAsync(url);
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.Add("Authorization", "Bearer " + session);
+            var response = await _client.SendAsync(request);
             await _logger.Log("Creating file and copying downloaded jar.");
             await using var file = File.Create(path);
+            using var stream = response.Content;
             await stream.CopyToAsync(file);
             await _logger.Log("Successfully downloaded jar.");
+        }
+
+        public async Task<bool> HasAccess(Game game)
+        {
+            if (game == Game.Osrs)
+            {
+                return true;
+            }
+
+            var user = await _userService.GetUser();
+            return user.GroupNames.FirstOrDefault(w => w == "Inuvation" || w == "Inuvation Maintainers") != null;
         }
     }
 }

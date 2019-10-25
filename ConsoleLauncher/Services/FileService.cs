@@ -17,7 +17,7 @@ namespace ConsoleLauncher.Services
 
         public string GetCacheFolder(Game game)
         {
-            var folder = game == Game.Osrs ? "RSPeer" : "RSPeer Inuvation";
+            var folder = game == Game.Osrs ? "RSPeer/cache" : "RSPeer Inuvation/cache";
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 var documents = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);

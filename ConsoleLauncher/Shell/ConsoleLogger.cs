@@ -13,6 +13,7 @@ namespace ConsoleLauncher.Shell
 
         public Task Log(string message, Exception exception)
         {
+            Console.BackgroundColor = ConsoleColor.Red;
             Console.WriteLine(exception);
             Console.WriteLine(message);
             return Task.CompletedTask;

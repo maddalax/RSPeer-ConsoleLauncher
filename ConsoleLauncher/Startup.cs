@@ -1,21 +1,43 @@
+using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
-using ConsoleLauncher.Models;
-using ConsoleLauncher.Services;
+using ConsoleLauncher.Shell;
+using ConsoleLauncher.Views;
 
 namespace ConsoleLauncher
 {
     public class Startup
     {
-        private readonly IClientJarService _service;
+        private readonly IEnumerable<IView> _views;
+        private readonly ILogger _logger;
 
-        public Startup(IClientJarService service)
+        public Startup(IEnumerable<IView> views, ILogger logger)
         {
-            _service = service;
+            _views = views;
+            _logger = logger;
         }
 
         public async Task Execute()
         {
-            await _service.DownloadLatestJar(Game.Osrs);
+            while (true)
+            {
+                try
+                {
+                    foreach (var view in _views)
+                    {
+                        if (await view.Validate())
+                        {
+                            await view.Execute();
+                            break;
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    await _logger.Log("", e);
+                }
+                await Task.Delay(1000);
+            }
         }
     }
 }

@@ -10,5 +10,6 @@ namespace ConsoleLauncher.Services
         Task<bool> HasLatestJar(Game game);
         Task<double> GetVersionByHash(Game game, string hash);
         Task DownloadLatestJar(Game game);
+        Task<bool> HasAccess(Game game);
     }
 }

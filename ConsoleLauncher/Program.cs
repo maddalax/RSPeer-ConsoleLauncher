@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using ConsoleLauncher.Providers;
 using ConsoleLauncher.Services;
 using ConsoleLauncher.Shell;
+using ConsoleLauncher.Views;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ConsoleLauncher
@@ -32,6 +33,11 @@ namespace ConsoleLauncher
             collection.AddSingleton<ILogger, ConsoleLogger>();
             collection.AddScoped<IFileService, FileService>();
             collection.AddScoped<IClientJarService, ClientJarService>();
+            collection.AddScoped<IUserService, UserService>();
+            collection.AddScoped<IAuthorizationService, AuthorizationService>();
+            collection.AddScoped<IView, UserLoginView>();
+            collection.AddScoped<IView, DownloadClientView>();
+            collection.AddScoped<IView, LaunchClientView>();
             
             var provider = collection.BuildServiceProvider();
             await provider.GetService<Startup>().Execute();
