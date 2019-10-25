@@ -7,6 +7,8 @@ namespace ConsoleLauncher.Services
     {
         Task<double> GetLatestVersion(Game game);
         Task<string> GetLatestJarPath(Game game);
+        Task<bool> HasLatestJar(Game game);
+        Task<double> GetVersionByHash(Game game, string hash);
         Task DownloadLatestJar(Game game);
     }
 }
