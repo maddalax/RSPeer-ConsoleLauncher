@@ -40,6 +40,8 @@ namespace ConsoleLauncher
             collection.AddScoped<IView, LaunchClientView>();
             collection.AddScoped<IClientLaunchService, ClientLaunchService>();
             collection.AddScoped<DownloadClientView>();
+            collection.AddScoped<IMessageService, MessageService>();
+            collection.AddScoped<IApiService, ApiService>();
             
             var provider = collection.BuildServiceProvider();
             await provider.GetService<Startup>().Execute();

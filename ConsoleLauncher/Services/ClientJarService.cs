@@ -1,6 +1,5 @@
 using System.IO;
 using System.Linq;
-using System.Net.Http;
 using System.Threading.Tasks;
 using ConsoleLauncher.Extensions;
 using ConsoleLauncher.Models;
@@ -10,24 +9,25 @@ namespace ConsoleLauncher.Services
 {
     public class ClientJarService : IClientJarService
     {
-        private HttpClient _client;
         private readonly IAuthorizationService _authorization;
         private readonly IUserService _userService;
         private readonly IFileService _fileService;
         private readonly ILogger _logger;
+        private readonly IApiService _api;
 
-        public ClientJarService(IHttpClientFactory factory, IUserService userService, IFileService fileService, ILogger logger, IAuthorizationService authorization)
+        public ClientJarService(IAuthorizationService authorization, IUserService userService, IFileService fileService, 
+            ILogger logger, IApiService api)
         {
-            _client = factory.CreateClient("ClientJarDownloader");
+            _authorization = authorization;
             _userService = userService;
             _fileService = fileService;
             _logger = logger;
-            _authorization = authorization;
+            _api = api;
         }
 
         public async Task<double> GetLatestVersion(Game game)
         {
-            var result = await _client.GetStringAsync("https://services.rspeer.org/api/bot/currentVersionRaw?game=" + game);
+            var result = await _api.GetString("bot/currentVersionRaw?game=" + game);
             return double.Parse(result);
         }
 
@@ -65,7 +65,7 @@ namespace ConsoleLauncher.Services
 
         public async Task<double> GetVersionByHash(Game game, string hash)
         {
-            var result = await _client.GetStringAsync($"https://services.rspeer.org/api/bot/getVersionByHash?game={game}&hash={hash}");
+            var result = await _api.GetString($"bot/getVersionByHash?game={game}&hash={hash}");
             return double.TryParse(result, out var version) ? version : 0.00;
         }
 
@@ -93,15 +93,10 @@ namespace ConsoleLauncher.Services
             
             await _logger.Log("Downloading the latest jar file for " + game);
             var path = await GetLatestJarPath(game);
-            var url = "https://services.rspeer.org/api/bot/currentJar?game=" + game;
             await _logger.Log("Saving to path " + path);
-            await _logger.Log("Sending request to " + url);
-            var request = new HttpRequestMessage(HttpMethod.Get, url);
-            request.Headers.Add("Authorization", "Bearer " + session);
-            var response = await _client.SendAsync(request);
+            await using var stream = await _api.GetStream("bot/currentJar?game=" + game);
             await _logger.Log("Creating file and copying downloaded jar.");
             await using var file = File.Create(path);
-            using var stream = response.Content;
             await stream.CopyToAsync(file);
             await _logger.Log("Successfully downloaded jar.");
         }
