@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using ConsoleLauncher.Models;
 using ConsoleLauncher.Services;
 
 namespace ConsoleLauncher.Views
@@ -33,5 +34,7 @@ namespace ConsoleLauncher.Views
                 Console.WriteLine(e.Message);
             }
         }
+
+        public ViewType Type { get; } = ViewType.Startup;
     }
 }

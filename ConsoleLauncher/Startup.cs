@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using ConsoleLauncher.Models;
 using ConsoleLauncher.Shell;
 using ConsoleLauncher.Views;
 
@@ -19,25 +21,38 @@ namespace ConsoleLauncher
 
         public async Task Execute()
         {
+            await ExecuteStartupViews();
             while (true)
             {
-                try
-                {
-                    foreach (var view in _views)
-                    {
-                        if (await view.Validate())
-                        {
-                            await view.Execute();
-                            break;
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    await _logger.Log("", e);
-                }
+                await ExecuteViews(_views.Where(w => w.Type == ViewType.Regular));
                 await Task.Delay(1000);
             }
+        }
+
+        private async Task ExecuteStartupViews()
+        {
+            await ExecuteViews(_views.Where(w => w.Type == ViewType.Startup).ToList());
+        }
+
+        private async Task ExecuteViews(IEnumerable<IView> views)
+        {
+            try
+            {
+                foreach (var view in views)
+                {
+                    if (!await view.Validate())
+                    {
+                        continue;
+                    }
+                    await view.Execute();
+                    break;
+                }
+            }
+            catch (Exception e)
+            {
+                await _logger.Log("", e);
+            }
+            
         }
     }
 }

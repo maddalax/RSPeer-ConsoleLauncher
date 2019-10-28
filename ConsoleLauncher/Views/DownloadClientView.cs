@@ -10,8 +10,6 @@ namespace ConsoleLauncher.Views
         private readonly IClientJarService _service;
         public bool SkipUpdate { get; private set; }
         
-        private DateTimeOffset _lastCheck = DateTimeOffset.MinValue;
-
         public DownloadClientView(IClientJarService service)
         {
             _service = service;
@@ -19,13 +17,6 @@ namespace ConsoleLauncher.Views
 
         public async Task<bool> Validate()
         {
-            if (_lastCheck.AddSeconds(30) > DateTimeOffset.Now)
-            {
-                return false;
-            }
-            
-            _lastCheck = DateTimeOffset.Now;
-            
             if (!await _service.HasLatestJar(Game.Osrs))
             {
                 return true;
@@ -59,5 +50,7 @@ namespace ConsoleLauncher.Views
             await Task.Delay(2000);
             await _service.DownloadLatestJar(Game.Rs3);
         }
+
+        public ViewType Type { get; } = ViewType.Startup;
     }
 }

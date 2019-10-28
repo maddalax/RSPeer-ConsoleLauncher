@@ -5,6 +5,7 @@
         <PublishTrimmed>true</PublishTrimmed>
     </PropertyGroup>
     <ItemGroup>
+      <PackageReference Include="CliWrap" Version="2.4.0" />
       <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.0.0" />
       <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="3.0.0" />
       <PackageReference Include="Microsoft.Extensions.Http" Version="3.0.0" />

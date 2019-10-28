@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using ConsoleLauncher.Models;
 
 namespace ConsoleLauncher.Views
 {
@@ -6,5 +7,6 @@ namespace ConsoleLauncher.Views
     {
         Task<bool> Validate();
         Task Execute();
+        ViewType Type { get; }
     }
 }
