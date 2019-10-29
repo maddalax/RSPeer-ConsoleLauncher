@@ -13,18 +13,20 @@ namespace ConsoleLauncher.Views
     public class LaunchClientView : IView
     {
         private readonly IClientLaunchService _launchService;
+        private readonly IClientJarService _jarService;
         private readonly IAuthorizationService _authorization;
         private readonly IUserService _userService;
         private readonly IHostApplicationLifetime _appLifetime;
         private readonly ILogger _logger;
         private User _user;
 
-        public LaunchClientView(IClientLaunchService launchService, IAuthorizationService authorization, IUserService userService, IHostApplicationLifetime appLifetime, ILogger logger)
+        public LaunchClientView(IClientLaunchService launchService, IAuthorizationService authorization, IUserService userService, IHostApplicationLifetime appLifetime, ILogger logger, IClientJarService jarService)
         {
             _launchService = launchService;
             _authorization = authorization;
             _userService = userService;
             _appLifetime = appLifetime;
+            _jarService = jarService;
             _logger = logger;
         }
 
@@ -86,6 +88,13 @@ namespace ConsoleLauncher.Views
 
         private async Task LaunchClient(Game game)
         {
+            if (game == Game.Rs3 && !await _jarService.HasAccess(Game.Rs3))
+            {
+               await _logger.Log("You do not have access to RSPeer 3 Inuvation.");
+               await _logger.Log("Visit https://rspeer.org/runescape-3-rs3-bot/ for more information.");
+               ProcessExtensions.OpenUrl("https://rspeer.org/runescape-3-rs3-bot/");
+               return;
+            }
             await _launchService.Launch(new BotPanelUserRequest
            {
                Game = game
