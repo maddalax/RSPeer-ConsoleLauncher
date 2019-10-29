@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading.Tasks;
 using ConsoleLauncher.Extensions;
 using ConsoleLauncher.Models.Requests;
@@ -33,7 +34,14 @@ namespace ConsoleLauncher.Services
            var messages = await _api.Get<IEnumerable<RemoteMessage>>("message/get?consumer=" + tag);
            foreach (var remoteMessage in messages)
            {
-               //Console.WriteLine(JsonSerializer.Serialize(remoteMessage));
+               if (remoteMessage.Source == "bot_panel_user_request")
+               {
+                   var request = JsonSerializer.Deserialize<BotPanelUserRequest>(remoteMessage.Message.ToString(), new JsonSerializerOptions
+                   {
+                       PropertyNameCaseInsensitive = true
+                   });
+                   Console.WriteLine(request.Type);
+               }
            }
         }
 

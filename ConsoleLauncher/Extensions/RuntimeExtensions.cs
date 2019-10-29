@@ -14,7 +14,7 @@ namespace ConsoleLauncher.Extensions
             {
                 return "Windows";
             }
-            return RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? "Mac OSX" : "Unknown Runtime";
+            return RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? "Mac OS X" : "Unknown Runtime";
         }
     }
 }
