@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using ConsoleLauncher.Models;
+using ConsoleLauncher.Providers;
 using ConsoleLauncher.Services;
 using ConsoleLauncher.Shell;
 
@@ -11,11 +12,14 @@ namespace ConsoleLauncher.Views
     {
         private readonly IUserService _service;
         private readonly ILogger _logger;
+        private readonly IAppArgProvider _argProvider;
+        private int _tries;
 
-        public UserLoginView(IUserService service, ILogger logger)
+        public UserLoginView(IUserService service, ILogger logger, IAppArgProvider argProvider)
         {
             _service = service;
             _logger = logger;
+            _argProvider = argProvider;
         }
 
         public async Task<bool> Validate(CancellationToken token)
@@ -25,22 +29,41 @@ namespace ConsoleLauncher.Views
 
         public async Task Execute(CancellationToken token)
         {
-            Console.WriteLine("Enter your RSPeer email address:");
-            var email = Console.ReadLine();
-            Console.WriteLine("Enter your RSPeer password:");
-            var password = GetPassword();
+            var credentials = GetCredentials();
             Console.WriteLine();
             Console.WriteLine("Logging in... please wait.");
             await Task.Delay(500, token);
             try
             {
-                await _service.Login(email, password);
+                await _service.Login(credentials.email, credentials.password);
                 Console.WriteLine("Successfully logged in.");
             }
             catch (Exception e)
             {
                 await _logger.Log(e.Message);
+                _tries++;
             }
+
+            // Failed to login with args 5 times, clear the args.
+            if (_tries > 5 && _argProvider.Email != null)
+            {
+                await _logger.Log("Failed to login over 5 times, clearing arguments. Please login manually.");
+                _argProvider.Email = null;
+                _argProvider.Password = null;
+            }
+        }
+
+        private (string email, string password) GetCredentials()
+        {
+            if (_argProvider.Email != null && _argProvider.Password != null)
+            {
+                return (_argProvider.Email, _argProvider.Password);
+            }
+            Console.WriteLine("Enter your RSPeer email address:");
+            var email = Console.ReadLine();
+            Console.WriteLine("Enter your RSPeer password:");
+            var password = GetPassword();
+            return (email, password);
         }
 
         public static string GetPassword()
