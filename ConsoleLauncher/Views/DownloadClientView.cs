@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using ConsoleLauncher.Models;
 using ConsoleLauncher.Services;
@@ -15,7 +16,7 @@ namespace ConsoleLauncher.Views
             _service = service;
         }
 
-        public async Task<bool> Validate()
+        public async Task<bool> Validate(CancellationToken token)
         {
             if (!await _service.HasLatestJar(Game.Osrs))
             {
@@ -25,7 +26,7 @@ namespace ConsoleLauncher.Views
             return await _service.HasAccess(Game.Rs3) && !await _service.HasLatestJar(Game.Rs3);
         }
 
-        public async Task Execute()
+        public async Task Execute(CancellationToken token)
         {
             Console.WriteLine("Your client is outdated with the latest version. RSPeer may have been updated or you do not have the client downloaded.");
             Console.WriteLine("Would you like to download the latest client?");
@@ -45,9 +46,9 @@ namespace ConsoleLauncher.Views
                 return;
             }
 
-            await Task.Delay(1000);
+            await Task.Delay(1000, token);
             await _service.DownloadLatestJar(Game.Osrs);
-            await Task.Delay(2000);
+            await Task.Delay(2000, token);
             await _service.DownloadLatestJar(Game.Rs3);
         }
 

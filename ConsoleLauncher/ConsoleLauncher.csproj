@@ -9,7 +9,12 @@
       <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.0.0" />
       <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="3.0.0" />
       <PackageReference Include="Microsoft.Extensions.Hosting" Version="3.0.0" />
+      <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="3.0.0" />
       <PackageReference Include="Microsoft.Extensions.Http" Version="3.0.0" />
+      <PackageReference Include="Microsoft.Extensions.Logging" Version="3.0.0" />
+      <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="3.0.0" />
+      <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="3.0.0" />
       <PackageReference Include="System.Net.Http" Version="4.3.4" />
+      <PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
     </ItemGroup>
 </Project>

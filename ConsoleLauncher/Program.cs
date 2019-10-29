@@ -5,46 +5,63 @@ using ConsoleLauncher.Services;
 using ConsoleLauncher.Shell;
 using ConsoleLauncher.Views;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using ILogger = ConsoleLauncher.Shell.ILogger;
 
 namespace ConsoleLauncher
 {
     class Program
     {
-        static void Main(string[] args)
+        public const double Version = 1.00;
+        private static bool _stopping;
+        
+        public static void Shutdown()
+        {
+            _stopping = true;
+        }
+            
+        public static async Task Main(string[] args)
         {
             try
             {
-                var program = new Program();
-                program.Start(args).Wait();
+                await CreateHostBuilder(args)
+                    .RunConsoleAsync();
             }
             catch (Exception e)
             {
+                if (_stopping && e is TaskCanceledException)
+                {
+                    return;
+                }
                 Console.WriteLine(e);
             }
         }
 
-        private async Task Start(string[] args)
-        {
-            var collection = new ServiceCollection();
-            
-            collection.AddHttpClient();
-            collection.AddSingleton<IAppArgProvider>(w => new AppArgProvider(args));
-            collection.AddSingleton<Startup>();
-            collection.AddSingleton<ILogger, ConsoleLogger>();
-            collection.AddScoped<IFileService, FileService>();
-            collection.AddScoped<IClientJarService, ClientJarService>();
-            collection.AddScoped<IUserService, UserService>();
-            collection.AddScoped<IAuthorizationService, AuthorizationService>();
-            collection.AddScoped<IView, UserLoginView>();
-            collection.AddScoped<IView, DownloadClientView>();
-            collection.AddScoped<IView, LaunchClientView>();
-            collection.AddScoped<IClientLaunchService, ClientLaunchService>();
-            collection.AddScoped<DownloadClientView>();
-            collection.AddScoped<IMessageService, MessageService>();
-            collection.AddScoped<IApiService, ApiService>();
-            
-            var provider = collection.BuildServiceProvider();
-            await provider.GetService<Startup>().Execute();
-        }
+        public static IHostBuilder CreateHostBuilder(string[] args) =>
+            Host.CreateDefaultBuilder(args)
+                .ConfigureLogging(w =>
+                {
+                    w.SetMinimumLevel(LogLevel.Error);
+                })
+                .ConfigureServices((hostContext, services) =>
+                {
+                    services.AddHttpClient();
+                    services.AddSingleton<IAppArgProvider>(w => new AppArgProvider(args));
+                    services.AddSingleton<Startup>();
+                    services.AddSingleton<ILogger, ConsoleLogger>();
+                    services.AddScoped<IFileService, FileService>();
+                    services.AddScoped<IClientJarService, ClientJarService>();
+                    services.AddScoped<IUserService, UserService>();
+                    services.AddScoped<IAuthorizationService, AuthorizationService>();
+                    services.AddScoped<IView, UserLoginView>();
+                    services.AddScoped<IView, DownloadClientView>();
+                    services.AddScoped<IView, LaunchClientView>();
+                    services.AddScoped<IClientLaunchService, ClientLaunchService>();
+                    services.AddScoped<DownloadClientView>();
+                    services.AddScoped<IMessageService, MessageService>();
+                    services.AddScoped<IApiService, ApiService>();
+                    services.AddHostedService<Startup>();
+                });
     }
 }

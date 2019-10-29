@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using ConsoleLauncher.Models;
 using ConsoleLauncher.Services;
@@ -14,12 +15,12 @@ namespace ConsoleLauncher.Views
             _service = service;
         }
 
-        public async Task<bool> Validate()
+        public async Task<bool> Validate(CancellationToken token)
         {
             return !await _service.HasSession();
         }
 
-        public async Task Execute()
+        public async Task Execute(CancellationToken token)
         {
             Console.WriteLine("Enter your RSPeer email address:");
             var email = Console.ReadLine();

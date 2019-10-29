@@ -16,6 +16,7 @@ namespace ConsoleLauncher.Shell
             Console.BackgroundColor = ConsoleColor.Red;
             Console.WriteLine(exception);
             Console.WriteLine(message);
+            Console.BackgroundColor = ConsoleColor.Black;
             return Task.CompletedTask;
         }
     }

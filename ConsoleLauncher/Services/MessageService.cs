@@ -9,13 +9,13 @@ using ConsoleLauncher.Models.Responses;
 
 namespace ConsoleLauncher.Services
 {
-    public class MessageService : IMessageService, IAsyncDisposable
+    public class MessageService : IMessageService
     {
         private readonly IApiService _api;
         private readonly HttpClient _client;
         private readonly IUserService _userService;
 
-        private string _tag;
+        private bool _disposed;
         private string _lastIp;
         private DateTimeOffset _lastRegister;
 
@@ -29,7 +29,6 @@ namespace ConsoleLauncher.Services
 
         public async Task Poll(string tag)
         {
-            _tag = tag;
            await Register(tag);
            var messages = await _api.Get<IEnumerable<RemoteMessage>>("message/get?consumer=" + tag);
            foreach (var remoteMessage in messages)
@@ -38,13 +37,26 @@ namespace ConsoleLauncher.Services
            }
         }
 
+        public async Task Dispose(string tag)
+        {
+            if (_disposed)
+            {
+                return;
+            }
+            await _api.Post<object>("botLauncher/unregister", new LauncherUnregisterRequest
+            {
+                Tag = tag
+            });
+            _client?.Dispose();
+            _disposed = true;
+        }
+
         private async Task Register(string tag)
         {
             if (_lastRegister.AddSeconds(30) > DateTimeOffset.Now)
             {
                 return;
             }
-            Console.WriteLine("Registering: " + tag);
             _lastRegister = DateTimeOffset.Now;
             _lastIp = await TryGetIp();
             var user = await _userService.GetUser();
@@ -70,14 +82,6 @@ namespace ConsoleLauncher.Services
             {
                 return _lastIp;
             }
-        }
-
-        public async ValueTask DisposeAsync()
-        {
-            await _api.Post<object>("botLauncher/unregister", new LauncherUnregisterRequest
-            {
-                Tag = _tag
-            });
         }
     }
 }
