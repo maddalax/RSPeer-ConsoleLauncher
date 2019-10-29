@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using ConsoleLauncher.Extensions;
 using ConsoleLauncher.Models.Requests;
 using ConsoleLauncher.Models.Responses;
+using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 
 namespace ConsoleLauncher.Services
@@ -18,6 +19,7 @@ namespace ConsoleLauncher.Services
         private readonly HttpClient _client;
         private readonly IUserService _userService;
         private readonly IClientLaunchService _launch;
+        private readonly IHostApplicationLifetime _appLifetime;
 
         private bool _disposed;
         private string _lastIp;
@@ -25,7 +27,8 @@ namespace ConsoleLauncher.Services
         private readonly SemaphoreSlim _semaphore;
         private readonly HashSet<int> _consumed;
 
-        public MessageService(IApiService api, IHttpClientFactory factory, IUserService userService, IClientLaunchService launch)
+        public MessageService(IApiService api, IHttpClientFactory factory, IUserService userService, IClientLaunchService launch, 
+            IHostApplicationLifetime appLifetime)
         {
             _semaphore = new SemaphoreSlim(1);
             _consumed = new HashSet<int>();
@@ -34,6 +37,7 @@ namespace ConsoleLauncher.Services
             _userService = userService;
             _client = factory.CreateClient("Default");
             _launch = launch;
+            _appLifetime = appLifetime;
         }
 
         public async Task Poll(string tag)
@@ -59,7 +63,15 @@ namespace ConsoleLauncher.Services
                     if (remoteMessage.Source == "bot_panel_user_request")
                     {
                         var request = JsonConvert.DeserializeObject<BotPanelUserRequest>(remoteMessage.Message);
-                        await _launch.Launch(request);
+                        if (request.Type == "start:client")
+                        {
+                            await _launch.Launch(request);
+                        }
+
+                        if (request.Type == "launcher:kill")
+                        {
+                            _appLifetime.StopApplication();
+                        }
                     }
                 }
             }

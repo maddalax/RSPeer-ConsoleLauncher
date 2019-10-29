@@ -10,9 +10,9 @@ namespace ConsoleLauncher.Models
         public Game Game { get; set; }
         public string RsUsername { get; set; }
         public string RsPassword { get; set; }
-        public long? World { get; set; }
+        public string World { get; set; }
         public string ProxyIp { get; set; }
-        public int? ProxyPort { get; set; }
+        public string ProxyPort { get; set; }
         public string ProxyUser { get; set; }
         public string ProxyPass { get; set; }
         public Proxy Proxy { get; set; }
@@ -35,7 +35,7 @@ namespace ConsoleLauncher.Models
     public class Proxy
     {
         public string Ip { get; set; }
-        public int? Port { get; set; }
+        public string Port { get; set; }
         public string Username { get; set; }
         public string Password { get; set; }
     }

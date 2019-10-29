@@ -31,10 +31,11 @@ namespace ConsoleLauncher.Services
                 await _jarService.DownloadLatestJar(game);
             }
             var command = "java -jar " + path;
-            var args = new List<string>
+            var args = new List<string>();
+            if (request.Game == Game.Rs3)
             {
-                "-noverify",
-            };
+                args.Add("-noverify");
+            }
             request.JvmArgs = string.IsNullOrEmpty(request.JvmArgs)
                 ? "-Xmx768m -Djava.net.preferIPv4Stack=true -Djava.net.preferIPv4Addresses=true -Xss2m"
                 : request.JvmArgs;
