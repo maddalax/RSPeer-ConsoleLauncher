@@ -18,13 +18,18 @@ namespace ConsoleLauncher.Services
         public string GetCacheFolder(Game game)
         {
             var folder = game == Game.Osrs ? "RSPeer/cache" : "RSPeer Inuvation/cache";
+            string path;
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 var documents = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-                return Path.Join(documents, folder);
+                path = Path.Join(documents, folder);
+                Directory.CreateDirectory(path);
+                return path;
             }
             var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-            return Path.Join(home, folder);
+            path = Path.Join(home, folder);
+            Directory.CreateDirectory(path);
+            return path;
         }
     }
 }

@@ -19,9 +19,12 @@ namespace ConsoleLauncher.Services
         public async Task WriteSession(string session)
         {
             var cache = _file.GetCacheFolder(Game.Osrs);
+            var cacheInu = _file.GetCacheFolder(Game.Rs3);
             var file = Path.Join(cache, "misc_new");
+            var fileInu = Path.Join(cacheInu, "misc_new");
             var xor = HashExtensions.Xor(session, GetKey());
             await File.WriteAllBytesAsync(file, xor);
+            await File.WriteAllBytesAsync(fileInu, xor);
         }
 
         public async Task<string> GetSession()

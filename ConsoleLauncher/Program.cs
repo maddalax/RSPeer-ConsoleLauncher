@@ -55,10 +55,8 @@ namespace ConsoleLauncher
                     services.AddScoped<IUserService, UserService>();
                     services.AddScoped<IAuthorizationService, AuthorizationService>();
                     services.AddScoped<IView, UserLoginView>();
-                    services.AddScoped<IView, DownloadClientView>();
                     services.AddScoped<IView, LaunchClientView>();
                     services.AddScoped<IClientLaunchService, ClientLaunchService>();
-                    services.AddScoped<DownloadClientView>();
                     services.AddScoped<IMessageService, MessageService>();
                     services.AddScoped<IApiService, ApiService>();
                     services.AddHostedService<Startup>();

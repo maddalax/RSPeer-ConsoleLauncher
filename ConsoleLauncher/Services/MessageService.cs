@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using ConsoleLauncher.Extensions;
 using ConsoleLauncher.Models.Requests;
 using ConsoleLauncher.Models.Responses;
+using Newtonsoft.Json;
 
 namespace ConsoleLauncher.Services
 {
@@ -15,34 +17,56 @@ namespace ConsoleLauncher.Services
         private readonly IApiService _api;
         private readonly HttpClient _client;
         private readonly IUserService _userService;
+        private readonly IClientLaunchService _launch;
 
         private bool _disposed;
         private string _lastIp;
         private DateTimeOffset _lastRegister;
+        private readonly SemaphoreSlim _semaphore;
+        private readonly HashSet<int> _consumed;
 
-        public MessageService(IApiService api, IHttpClientFactory factory, IUserService userService)
+        public MessageService(IApiService api, IHttpClientFactory factory, IUserService userService, IClientLaunchService launch)
         {
+            _semaphore = new SemaphoreSlim(1);
+            _consumed = new HashSet<int>();
             _lastRegister = DateTimeOffset.MinValue;
             _api = api;
             _userService = userService;
             _client = factory.CreateClient("Default");
+            _launch = launch;
         }
 
         public async Task Poll(string tag)
         {
-           await Register(tag);
-           var messages = await _api.Get<IEnumerable<RemoteMessage>>("message/get?consumer=" + tag);
-           foreach (var remoteMessage in messages)
-           {
-               if (remoteMessage.Source == "bot_panel_user_request")
-               {
-                   var request = JsonSerializer.Deserialize<BotPanelUserRequest>(remoteMessage.Message.ToString(), new JsonSerializerOptions
-                   {
-                       PropertyNameCaseInsensitive = true
-                   });
-                   Console.WriteLine(request.Type);
-               }
-           }
+            try
+            {
+                if (!await _userService.HasSession())
+                {
+                    return;
+                }
+                await _semaphore.WaitAsync();
+                await Register(tag);
+                var messages = await _api.Get<IEnumerable<RemoteMessage>>("message/get?consumer=" + tag);
+                foreach (var remoteMessage in messages)
+                {
+                    if (_consumed.Contains(remoteMessage.Id))
+                    {
+                        continue;
+                    }
+                    
+                    await Consume(remoteMessage.Id);
+                    
+                    if (remoteMessage.Source == "bot_panel_user_request")
+                    {
+                        var request = JsonConvert.DeserializeObject<BotPanelUserRequest>(remoteMessage.Message);
+                        await _launch.Launch(request);
+                    }
+                }
+            }
+            finally
+            {
+                _semaphore.Release();
+            }
         }
 
         public async Task Dispose(string tag)
@@ -77,6 +101,16 @@ namespace ConsoleLauncher.Services
                 Platform = RuntimeExtensions.RuntimeToString(),
                 UserId = user.Id
             });
+        }
+
+        private async Task Consume(int id)
+        {
+            if (_consumed.Count > 100)
+            {
+                _consumed.Clear();
+            }
+            _consumed.Add(id);
+            await _api.Post<object>("message/consume?message=" + id, new object());
         }
 
         private async Task<string> TryGetIp()

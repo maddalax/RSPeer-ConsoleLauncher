@@ -2,9 +2,9 @@ using System;
 using System.IO;
 using System.Net.Http;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
 using ConsoleLauncher.Models.Responses;
+using Newtonsoft.Json;
 
 namespace ConsoleLauncher.Services
 {
@@ -24,7 +24,7 @@ namespace ConsoleLauncher.Services
         {
             var content = await GetString(path);
             return string.IsNullOrEmpty(content)
-                ? default : JsonSerializer.Deserialize<T>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                ? default : JsonConvert.DeserializeObject<T>(content);
         }
 
         public async Task<Stream> GetStream(string path)
@@ -51,13 +51,13 @@ namespace ConsoleLauncher.Services
         {
             var session = await _authorization.GetSession();
             var message = new HttpRequestMessage(HttpMethod.Post, $"{_baseUrl}{path}");
-            var serialized = JsonSerializer.Serialize(body);
+            var serialized = JsonConvert.SerializeObject(body);
             message.Content = new StringContent(serialized, Encoding.Default, "application/json");
             message.Headers.Add("Authorization", "Bearer " + session);
             var result = await _client.SendAsync(message);
             var content = await result.Content.ReadAsStringAsync();
             AssertError(result, content);
-            return string.IsNullOrEmpty(content) ? default : JsonSerializer.Deserialize<T>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            return string.IsNullOrEmpty(content) ? default : JsonConvert.DeserializeObject<T>(content);
         }
 
         private void AssertError(HttpResponseMessage message, string content)
@@ -66,7 +66,7 @@ namespace ConsoleLauncher.Services
             {
                 return;
             }
-            var error = JsonSerializer.Deserialize<ApiErrorResponse>(content, new JsonSerializerOptions {PropertyNameCaseInsensitive = true});
+            var error = JsonConvert.DeserializeObject<ApiErrorResponse>(content);
             throw new Exception(error.Error ?? "Something went wrong.");
         }
     }
