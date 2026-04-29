@@ -1,4 +1,4 @@
-This particular project is one piece of a side project turned into a side business. 
+This particular project is one piece of a side project turned into a side business from 2019.
 
 This is the 'launcher' that starts up the bot clients with various configurations and lets you manage them remotely.
 
